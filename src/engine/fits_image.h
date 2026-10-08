@@ -11,8 +11,11 @@ struct FitsImage {
     int width = 0;
     int height = 0;
     std::vector<float> pixels;  // row-major, FITS row order (row 0 = bottom)
+    int planes = 1;             // NAXIS3 (1 for a plain 2-D image)
     int bitpix = 0;             // original BITPIX of the HDU
-    std::string bayerPattern;   // BAYERPAT keyword, empty if absent
+    std::string bayerPattern;   // BAYERPAT keyword, trimmed; empty if absent
+    int bayerXOffset = 0;       // XBAYROFF
+    int bayerYOffset = 0;       // YBAYROFF
 };
 
 // Loads the first HDU containing a 2-D (or larger) image; for NAXIS > 2

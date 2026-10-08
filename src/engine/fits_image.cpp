@@ -39,11 +39,18 @@ FitsImage loadFits(const std::string& path) {
     }
     img.width = static_cast<int>(naxes[0]);
     img.height = static_cast<int>(naxes[1]);
+    img.planes = naxis >= 3 ? static_cast<int>(naxes[2]) : 1;
 
     char bayer[FLEN_VALUE] = {};
     int kstatus = 0;
-    if (fits_read_key(fptr, TSTRING, "BAYERPAT", bayer, nullptr, &kstatus) == 0)
+    if (fits_read_key(fptr, TSTRING, "BAYERPAT", bayer, nullptr, &kstatus) == 0) {
         img.bayerPattern = bayer;
+        img.bayerPattern.erase(img.bayerPattern.find_last_not_of(' ') + 1);
+    }
+    kstatus = 0;
+    fits_read_key(fptr, TINT, "XBAYROFF", &img.bayerXOffset, nullptr, &kstatus);
+    kstatus = 0;
+    fits_read_key(fptr, TINT, "YBAYROFF", &img.bayerYOffset, nullptr, &kstatus);
 
     const long long n = static_cast<long long>(img.width) * img.height;
     img.pixels.resize(static_cast<size_t>(n));

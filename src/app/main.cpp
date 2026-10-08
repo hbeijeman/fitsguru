@@ -1,48 +1,74 @@
 #include <QApplication>
-#include <QElapsedTimer>
+#include <QCollator>
+#include <QCommandLineParser>
+#include <QDir>
 #include <QFileInfo>
 #include <QMessageBox>
 
+#include <algorithm>
 #include <cstdio>
-#include <exception>
+#include <cstdlib>
 
-#include "fits_image.h"
-#include "image_view.h"
-#include "stretch.h"
+#include "main_window.h"
+
+namespace {
+
+[[noreturn]] void fail(const QString& msg) {
+    std::fprintf(stderr, "fitsguru: %s\n", qPrintable(msg));
+    QMessageBox::critical(nullptr, "fitsguru", msg);
+    std::exit(1);
+}
+
+// FITS files directly inside `dir` (extensions .fits/.fit/.fts, any case),
+// in natural order so frame_2 sorts before frame_10.
+QStringList fitsFilesIn(const QString& dir) {
+    QStringList files;
+    const QFileInfoList entries =
+        QDir(dir).entryInfoList({"*.fits", "*.fit", "*.fts"}, QDir::Files | QDir::Readable);
+    for (const QFileInfo& fi : entries) files << fi.absoluteFilePath();
+    QCollator collator;
+    collator.setNumericMode(true);
+    std::sort(files.begin(), files.end(), collator);
+    return files;
+}
+
+}  // namespace
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
-    const QStringList args = app.arguments();
-    if (args.size() < 2) {
-        std::fprintf(stderr, "usage: fitsguru <file.fits>\n");
-        return 2;
-    }
-    const QString path = args.at(1);
+    QApplication::setApplicationName("fitsguru");
 
-    ImageView view;
-    try {
-        QElapsedTimer t;
-        t.start();
-        fg::FitsImage img = fg::loadFits(path.toStdString());
-        const qint64 tLoad = t.restart();
-        fg::DisplayBuffer buf = fg::autoStretch(img);
-        const qint64 tStretch = t.elapsed();
-        std::fprintf(stderr, "%dx%d BITPIX=%d%s  load %lld ms, stretch %lld ms\n",
-                     img.width, img.height, img.bitpix,
-                     img.bayerPattern.empty() ? "" : (" BAYERPAT=" + img.bayerPattern).c_str(),
-                     static_cast<long long>(tLoad), static_cast<long long>(tStretch));
-        view.setWindowTitle(QStringLiteral("%1 — %2×%3")
-                                .arg(QFileInfo(path).fileName())
-                                .arg(img.width)
-                                .arg(img.height));
-        view.setFrame(std::move(buf));
-    } catch (const std::exception& e) {
-        std::fprintf(stderr, "fitsguru: %s\n", e.what());
-        QMessageBox::critical(nullptr, "fitsguru", QString::fromStdString(e.what()));
-        return 1;
+    QCommandLineParser parser;
+    parser.setApplicationDescription("FITS image viewer");
+    parser.addHelpOption();
+    const QCommandLineOption debayerOption(
+        {"debayer", "rgb"}, "Demosaic single-plane images that have a BAYERPAT header.");
+    parser.addOption(debayerOption);
+    parser.addPositionalArgument(
+        "path", "FITS file to display, or a folder of .fits/.fit/.fts files to browse.");
+    parser.process(app);
+    if (parser.positionalArguments().size() != 1) parser.showHelp(2);
+    const QFileInfo arg(parser.positionalArguments().first());
+
+    QStringList files;
+    QString folder;
+    if (arg.isDir()) {
+        folder = arg.absoluteFilePath();
+        files = fitsFilesIn(folder);
+        if (files.isEmpty()) fail(QStringLiteral("no .fits/.fit/.fts files in '%1'").arg(folder));
+        std::fprintf(stderr, "%s: %lld FITS files\n", qPrintable(folder),
+                     static_cast<long long>(files.size()));
+    } else if (arg.exists()) {
+        files << arg.absoluteFilePath();
+    } else {
+        fail(QStringLiteral("'%1' does not exist").arg(arg.filePath()));
     }
 
-    view.resize(1280, 900);
-    view.show();
+    MainWindow window(files, folder, parser.isSet(debayerOption));
+    window.resize(folder.isEmpty() ? 1280 : 1540, 900);
+    QString error;
+    // A single unreadable file is fatal; in a folder the user can pick another.
+    if (!window.showFile(0, &error) && folder.isEmpty()) fail(error);
+    window.show();
     return app.exec();
 }
