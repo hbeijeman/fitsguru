@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="128" height="128" viewBox="0 0 1254 1254" role="img" aria-labelledby="iconTitle iconDesc">
+  <title id="iconTitle">FITS Viewer</title>
+  <desc id="iconDesc">Muted red F surrounded by two stylized blue galaxy spiral arms transitioning to soft yellow toward the center on a black background.</desc>
+  <defs>
+    <linearGradient id="top-arm" x1="570" y1="310" x2="1118" y2="311" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffeb92"/>
+      <stop offset="0.19" stop-color="#ffe69c"/>
+      <stop offset="0.40" stop-color="#a6d4ed"/>
+      <stop offset="0.72" stop-color="#6cb5f4"/>
+      <stop offset="1" stop-color="#6cb5f4"/>
+    </linearGradient>
+    <radialGradient id="left-arm" cx="422" cy="820" r="402" gradientUnits="userSpaceOnUse" gradientTransform="translate(42,108) scale(.90,.88)">
+      <stop offset="0" stop-color="#ffeb9d"/>
+      <stop offset="0.24" stop-color="#fce7a5"/>
+      <stop offset="0.55" stop-color="#a5d4ed"/>
+      <stop offset="0.85" stop-color="#70b9f7"/>
+      <stop offset="1" stop-color="#69b4fa"/>
+    </radialGradient>
+    <linearGradient id="right-arm" x1="685" y1="530" x2="1020" y2="690" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe796"/>
+      <stop offset="0.22" stop-color="#ffebad"/>
+      <stop offset="0.56" stop-color="#a3d4ec"/>
+      <stop offset="1" stop-color="#72bafb"/>
+    </linearGradient>
+    <radialGradient id="yellow-inner" cx="815" cy="758" r="187" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffec9b" stop-opacity="1"/>
+      <stop offset="0.5" stop-color="#ffedab" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#ffedab" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lower-arm" x1="809" y1="739" x2="380" y2="963" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffeb9e"/>
+      <stop offset="0.22" stop-color="#add6e8"/>
+      <stop offset="0.55" stop-color="#71baf8"/>
+      <stop offset="1" stop-color="#6eb6f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1254" height="1254" fill="#000000"/>
+  <path id="arm-upper" d="M572,302 L701,302 L759,283 L825,269 L880,264 L925,266 L990,280 L1037,300 L1087,335 L1132,381 L1098,324 L1075,299 L1046,276 L989,247 L912,229 L819,227 L735,239 L643,267Z" fill="url(#top-arm)"/>
+  <path id="arm-left" d="M432,403 L378,430 L337,456 L295,489 L261,522 L230,560 L211,590 L197,620 L188,655 L189,687 L199,719 L219,752 L246,780 L279,803 L317,821 L360,834 L414,842 L428,842 L432,839 L431,803 L397,792 L363,775 L320,739 L301,713 L288,686 L280,656 L279,621 L291,570 L323,510 L348,478 L381,444Z" fill="url(#left-arm)"/>
+  <path id="arm-right" d="M948,526 L902,508 L872,501 L814,495 L776,496 L725,503 L682,515 L640,533 L604,555 L664,536 L711,529 L766,529 L824,540 L866,558 L898,580 L922,605 L937,627 L954,670 L958,722 L953,753 L941,788 L907,846 L863,898 L815,941 L760,979 L698,1014 L789,980 L837,956 L886,926 L936,888 L976,850 L1021,789 L1037,754 L1047,715 L1049,672 L1043,635 L1029,601 L1011,575 L987,551Z" fill="url(#right-arm)"/>
+  <path d="M948,526 L902,508 L872,501 L814,495 L776,496 L725,503 L682,515 L640,533 L604,555 L664,536 L711,529 L766,529 L824,540 L866,558 L898,580 L922,605 L937,627 L954,670 L958,722 L953,753 L941,788 L907,846 L863,898 L815,941 L760,979 L698,1014 L789,980 L837,956 L886,926 L936,888 L976,850 L1021,789 L1037,754 L1047,715 L1049,672 L1043,635 L1029,601 L1011,575 L987,551Z" fill="url(#yellow-inner)"/>
+  <path id="arm-lower" d="M865,674 L842,728 L800,785 L768,817 L727,850 L687,876 L641,900 L638,927 L628,937 L551,938 L488,952 L429,958 L346,953 L302,943 L247,921 L200,891 L162,857 L186,895 L225,936 L273,968 L320,988 L372,1001 L416,1006 L480,1004 L554,990 L607,973 L675,942 L732,905 L778,864 L817,816 L846,764 L861,717Z" fill="url(#lower-arm)"/>
+  <path id="letter-f" d="M870,319 L374,320 L375,338 L410,344 L431,354 L443,366 L451,389 L451,840 L445,863 L436,877 L414,894 L376,904 L375,922 L623,921 L621,904 L598,896 L579,878 L566,844 L564,831 L565,629 L664,629 L710,638 L728,648 L748,668 L760,690 L767,711 L784,711 L783,555 L768,555 L746,577 L723,584 L564,584 L564,385 L569,373 L582,364 L597,362 L721,363 L762,369 L794,383 L817,403 L829,420 L848,465 L870,465Z" fill="#df494b"/>
+</svg>

@@ -10,11 +10,19 @@ CFITSIO. Release is the default build type (`-O3`/`/O2` + LTO). Add
     cmake -S . -B build -G Ninja
     cmake --build build
 
+Debian package (installs to /usr with a menu entry and icon, and registers
+fitsguru for .fits/.fit/.fts files):
+
+    cmake --build build --target package
+    sudo apt install ./build/fitsguru_0.1_amd64.deb
+    xdg-mime default fitsguru.desktop application/fits   # make it the default opener
+
 ## macOS (Homebrew)
 
     brew install qt cfitsio pkg-config cmake ninja
     cmake -S . -B build -G Ninja
     cmake --build build
+    open build/fitsguru.app --args /path/to/file.fits   # or build/fitsguru.app/Contents/MacOS/fitsguru
 
 ## Windows (Visual Studio 2022)
 
@@ -39,3 +47,10 @@ CFITSIO. Release is the default build type (`-O3`/`/O2` + LTO). Add
 4. Copy the Qt DLLs next to the executable (vcpkg already copies cfitsio's):
 
        C:\Qt\6.8.3\msvc2022_64\bin\windeployqt.exe build\fitsguru.exe
+
+## Icons
+
+All icons are rendered from `resources/fitsguru.svg` and committed. After
+editing the SVG, regenerate the PNGs, `.ico` and `.icns` with:
+
+    cmake --build build --target icons

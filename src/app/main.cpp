@@ -3,6 +3,7 @@
 #include <QCommandLineParser>
 #include <QDir>
 #include <QFileInfo>
+#include <QIcon>
 #include <QMessageBox>
 
 #include <algorithm>
@@ -37,10 +38,17 @@ QStringList fitsFilesIn(const QString& dir) {
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
     QApplication::setApplicationName("fitsguru");
+    QApplication::setApplicationVersion(FITSGURU_VERSION);
+    QGuiApplication::setDesktopFileName("fitsguru");  // Wayland: match fitsguru.desktop
+    QIcon icon;
+    for (int size : {16, 24, 32, 48, 64, 128, 256, 512})
+        icon.addFile(QStringLiteral(":/icons/fitsguru-%1.png").arg(size), QSize(size, size));
+    QApplication::setWindowIcon(icon);
 
     QCommandLineParser parser;
     parser.setApplicationDescription("FITS image viewer");
     parser.addHelpOption();
+    parser.addVersionOption();
     const QCommandLineOption debayerOption(
         {"debayer", "rgb"}, "Demosaic single-plane images that have a BAYERPAT header.");
     parser.addOption(debayerOption);

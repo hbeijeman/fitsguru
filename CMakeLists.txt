@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(fitsguru LANGUAGES CXX)
+project(fitsguru VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -105,3 +105,75 @@ qt_add_executable(fitsguru
   src/app/main_window.cpp
 )
 target_link_libraries(fitsguru PRIVATE fitsengine Qt6::Widgets Qt6::Concurrent)
+target_compile_definitions(fitsguru PRIVATE FITSGURU_VERSION="${PROJECT_VERSION}")
+
+# Icons, all rendered from resources/fitsguru.svg (regenerate with
+# `cmake --build build --target icons`).
+set(ICON_SIZES 16 24 32 48 64 128 256 512)
+set(ICON_PNGS "")
+foreach(size IN LISTS ICON_SIZES)
+  list(APPEND ICON_PNGS resources/icons/fitsguru-${size}.png)
+endforeach()
+# Window / Dock icon at runtime, on every platform.
+qt_add_resources(fitsguru icons PREFIX "/" BASE resources FILES ${ICON_PNGS})
+
+if(WIN32)
+  # Explorer/taskbar icon and version info of the .exe.
+  configure_file(resources/fitsguru.rc.in ${CMAKE_CURRENT_BINARY_DIR}/fitsguru.rc @ONLY)
+  target_sources(fitsguru PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/fitsguru.rc)
+elseif(APPLE)
+  # A proper .app bundle so Finder and the Dock show the icon.
+  set_source_files_properties(resources/fitsguru.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  target_sources(fitsguru PRIVATE resources/fitsguru.icns)
+  set_target_properties(fitsguru PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_BUNDLE_NAME fitsguru
+    MACOSX_BUNDLE_ICON_FILE fitsguru.icns
+    MACOSX_BUNDLE_GUI_IDENTIFIER io.github.hbeijeman.fitsguru
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
+endif()
+
+include(GNUInstallDirs)
+install(TARGETS fitsguru
+  BUNDLE DESTINATION .
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+if(UNIX AND NOT APPLE)
+  # Desktop integration: launcher entry plus hicolor theme icons.
+  install(FILES resources/fitsguru.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+  install(FILES resources/fitsguru.svg
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+  foreach(size IN LISTS ICON_SIZES)
+    install(FILES resources/icons/fitsguru-${size}.png
+      DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${size}x${size}/apps
+      RENAME fitsguru.png)
+  endforeach()
+endif()
+
+# Icon generator; not part of the normal build.
+add_executable(make_icons EXCLUDE_FROM_ALL tools/make_icons.cpp)
+target_link_libraries(make_icons PRIVATE Qt6::Gui)
+add_custom_target(icons
+  COMMAND make_icons ${CMAKE_CURRENT_SOURCE_DIR}/resources/fitsguru.svg
+                     ${CMAKE_CURRENT_SOURCE_DIR}/resources
+  DEPENDS make_icons
+  COMMENT "Rendering icons from resources/fitsguru.svg")
+
+# Linux package: `cmake --build build --target package` -> fitsguru_<ver>_<arch>.deb
+# Installs to /usr; the desktop entry associates .fits/.fit/.fts
+# (application/fits) with fitsguru. Desktop, icon and MIME caches are
+# refreshed by dpkg triggers.
+if(UNIX AND NOT APPLE)
+  set(CPACK_GENERATOR DEB)
+  set(CPACK_PACKAGE_NAME fitsguru)
+  set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fast FITS image viewer for astronomical frames")
+  set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/hbeijeman/fitsguru")
+  set(CPACK_PACKAGING_INSTALL_PREFIX /usr)
+  set(CPACK_STRIP_FILES ON)
+  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "hbeijeman")
+  set(CPACK_DEBIAN_PACKAGE_SECTION science)
+  set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)  # Qt, CFITSIO, libstdc++ from the binary
+  set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "qt6-wayland")
+  include(CPack)
+endif()

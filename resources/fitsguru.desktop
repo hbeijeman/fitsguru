@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=fitsguru
+GenericName=FITS Image Viewer
+Comment=View and blink FITS astronomical images
+Exec=fitsguru %f
+Icon=fitsguru
+Terminal=false
+Categories=Graphics;Viewer;
+Keywords=FITS;astronomy;telescope;blink;
+MimeType=application/fits;image/fits;
