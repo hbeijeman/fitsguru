@@ -20,15 +20,19 @@ ImageView::ImageView(QWidget* parent) : QWidget(parent) {
     setCursor(Qt::OpenHandCursor);
 }
 
-void ImageView::setFrame(std::vector<fg::DisplayBuffer> pyramid) {
-    const QSizeF oldSize = imageSize();
+void ImageView::setFrame(std::vector<fg::DisplayBuffer> pyramid, QSize imageSize, int step) {
+    const QSizeF oldSize = this->imageSize();
     pyramid_ = std::move(pyramid);
     levels_.clear();
     for (const auto& b : pyramid_)
         levels_.emplace_back(b.data.data(), b.width, b.height, b.stride,
                              b.channels == 3 ? QImage::Format_RGB888 : QImage::Format_Grayscale8);
+    step_ = std::max(1, step);
+    imageSize_ = levels_.empty() ? QSize()
+                 : imageSize.isEmpty() ? levels_.front().size() * step_
+                                       : imageSize;
     // Same geometry (e.g. re-rendered with other options): keep zoom and pan.
-    if (!fitMode_ && imageSize() == oldSize) {
+    if (!fitMode_ && this->imageSize() == oldSize) {
         update();
     } else {
         fitToView();
@@ -36,7 +40,7 @@ void ImageView::setFrame(std::vector<fg::DisplayBuffer> pyramid) {
 }
 
 QSizeF ImageView::imageSize() const {
-    return levels_.empty() ? QSizeF() : QSizeF(levels_.front().size());
+    return QSizeF(imageSize_);
 }
 
 double ImageView::fitScale() const {
@@ -69,8 +73,9 @@ QPointF ImageView::widgetToImage(QPointF p) const {
 
 // Coarsest pyramid level that still has at least one texel per device pixel.
 const QImage& ImageView::levelFor(double devicePixelsPerImagePixel, int* level) const {
+    const double perBasePixel = devicePixelsPerImagePixel * step_;
     int l = 0;
-    while (l + 1 < static_cast<int>(levels_.size()) && devicePixelsPerImagePixel * (1 << (l + 1)) <= 1.0)
+    while (l + 1 < static_cast<int>(levels_.size()) && perBasePixel * (1 << (l + 1)) <= 1.0)
         ++l;
     *level = l;
     return levels_[l];
@@ -90,7 +95,7 @@ void ImageView::paintEvent(QPaintEvent*) {
 
     int level = 0;
     const QImage& img = levelFor(scale_ * devicePixelRatioF(), &level);
-    const double f = 1 << level;
+    const double f = step_ * (1 << level);  // full-resolution pixels per texel
     // Smooth when minifying; nearest when magnifying so pixels stay visible.
     painter.setRenderHint(QPainter::SmoothPixmapTransform, scale_ * devicePixelRatioF() * f < 1.0);
     painter.drawImage(target, img, QRectF(src.topLeft() / f, src.size() / f));
@@ -106,9 +111,10 @@ void ImageView::paintInset(QPainter& painter) {
 
     int level = 0;
     const QImage& src = levelFor(insetScale * devicePixelRatioF(), &level);
+    const double f = step_ * (1 << level);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.setOpacity(0.85);
-    painter.drawImage(inset, src);
+    painter.drawImage(inset, src, QRectF(QPointF(0, 0), img / f));
     painter.setOpacity(1.0);
     painter.setPen(QPen(QColor(255, 255, 255, 160), 1));
     painter.setBrush(Qt::NoBrush);
@@ -149,6 +155,7 @@ void ImageView::wheelEvent(QWheelEvent* e) {
     fitMode_ = false;
     clampCenter();
     update();
+    emit zoomed();
 }
 
 void ImageView::mousePressEvent(QMouseEvent* e) {

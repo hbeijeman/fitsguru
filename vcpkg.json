@@ -1,0 +1,7 @@
+{
+  "name": "fitsguru",
+  "version-string": "0.1",
+  "dependencies": [
+    "cfitsio"
+  ]
+}

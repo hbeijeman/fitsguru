@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <optional>
 #include <vector>
@@ -35,14 +36,44 @@ struct BayerPattern {
 // (RGGB, BGGR, GRBG or GBRG).
 std::optional<BayerPattern> bayerPattern(const FitsImage& img);
 
-// Automatic screen stretch (median/MAD shadows clip + midtones transfer
-// function), flipped so FITS row 0 ends up at the bottom of the display.
-DisplayBuffer autoStretch(const FitsImage& img, const StretchParams& p = {});
+// Maps raw pixel values to [0,255] display values (shadows clip + midtones
+// transfer function).
+struct Curve {
+    float offset = 0, scale = 1, m = 0.5f;
 
-// Same stretch per colour channel (unlinked), combined with a nearest-
-// neighbour demosaic: each 2x2 CFA cell becomes one RGB colour (G averaged)
-// written to all four of its pixels. Output is RGB888 at full resolution.
-DisplayBuffer autoStretchBayer(const FitsImage& img, const BayerPattern& bayer,
-                               const StretchParams& p = {});
+    uint8_t operator()(float v) const {
+        float x = std::isfinite(v) ? (v - offset) * scale : 0.0f;
+        if (x <= 0.0f) return 0;
+        if (x >= 1.0f) return 255;
+        x = ((m - 1.0f) * x) / ((2.0f * m - 1.0f) * x - m);
+        return static_cast<uint8_t>(x * 255.0f + 0.5f);
+    }
+};
+
+// One curve for mono, or one per colour channel (unlinked) for Bayer data.
+using StretchCurves = std::array<Curve, 3>;
+
+// Auto-stretch statistics (median/MAD). With `bayer`, per CFA colour.
+// Computing these on a decimated preview and reusing them for the full image
+// keeps the two renderings visually identical.
+StretchCurves computeStretch(const FitsImage& img, const std::optional<BayerPattern>& bayer,
+                             const StretchParams& p = {});
+
+// Gray8 rendering, flipped so FITS row 0 ends up at the bottom of the display.
+DisplayBuffer applyStretch(const FitsImage& img, const StretchCurves& curves);
+
+// RGB888 rendering with a nearest-neighbour demosaic: each 2x2 CFA cell
+// becomes one colour (G averaged) written to all four of its pixels.
+DisplayBuffer applyStretchBayer(const FitsImage& img, const BayerPattern& bayer,
+                                const StretchCurves& curves);
+
+inline DisplayBuffer autoStretch(const FitsImage& img, const StretchParams& p = {}) {
+    return applyStretch(img, computeStretch(img, std::nullopt, p));
+}
+
+inline DisplayBuffer autoStretchBayer(const FitsImage& img, const BayerPattern& bayer,
+                                      const StretchParams& p = {}) {
+    return applyStretchBayer(img, bayer, computeStretch(img, bayer, p));
+}
 
 }  // namespace fg

@@ -17,8 +17,18 @@ public:
     explicit ImageView(QWidget* parent = nullptr);
 
     // Takes ownership of the pyramid; the QImages wrap its memory without copying.
-    // Zoom and pan are kept when the new frame has the same size.
-    void setFrame(std::vector<fg::DisplayBuffer> pyramid);
+    // `imageSize` is the full-resolution size the view works in (default: the
+    // pyramid's base level); `step` is how many full-resolution pixels each
+    // base-level pixel stands for (> 1 for a decimated preview). Zoom and pan
+    // are kept when the new frame has the same imageSize.
+    void setFrame(std::vector<fg::DisplayBuffer> pyramid, QSize imageSize = {}, int step = 1);
+
+    // True once the user has zoomed or panned away from fit-to-window.
+    bool isZoomed() const { return !fitMode_; }
+
+signals:
+    // The user changed the zoom level.
+    void zoomed();
 
 protected:
     void paintEvent(QPaintEvent*) override;
@@ -39,7 +49,9 @@ private:
     void paintInset(QPainter& painter);
 
     std::vector<fg::DisplayBuffer> pyramid_;
-    std::vector<QImage> levels_;  // views onto pyramid_, level 0 = full resolution
+    std::vector<QImage> levels_;  // views onto pyramid_, level 0 = base
+    QSize imageSize_;             // full-resolution size, in view coordinates
+    int step_ = 1;                // full-resolution pixels per base-level pixel
 
     double scale_ = 1.0;  // widget (logical) pixels per image pixel
     QPointF center_;      // image coordinate shown at the widget centre
